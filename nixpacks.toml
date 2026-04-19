@@ -1,0 +1,10 @@
+providers = ['node']
+
+[variables]
+NIXPACKS_NO_PROVIDER = 'ruby'
+
+[phases.install]
+cmds = ['npm ci']
+
+[start]
+cmd = 'npm run start'

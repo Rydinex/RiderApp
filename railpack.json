@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "node",
+  "packages": {
+    "node": "22"
+  },
+  "deploy": {
+    "startCommand": "npm run start",
+    "variables": {
+      "EXPO_PUBLIC_BACKEND_URL": "https://api.rydinex.com"
+    }
+  }
+}
