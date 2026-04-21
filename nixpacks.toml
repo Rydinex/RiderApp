@@ -4,7 +4,7 @@ providers = ['node']
 NIXPACKS_NO_PROVIDER = 'ruby'
 
 [phases.install]
-cmds = ['npm ci']
+cmds = ['npm install']
 
 [start]
 cmd = 'npm run start'
