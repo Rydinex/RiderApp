@@ -630,7 +630,7 @@ function RegistrationScreen({ navigation, context }: RegistrationProps) {
       }
 
       context.setRiderId(resolvedRiderId);
-      navigation.navigate(isLoginMode ? 'Home' : 'AddPaymentMethod');
+      navigation.replace(isLoginMode ? 'Home' : 'AddPaymentMethod');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : `Unable to ${isLoginMode ? 'sign in rider' : 'register rider'}.`;
       Alert.alert('Error', message);
@@ -672,6 +672,12 @@ function AddPaymentMethodScreen({ navigation, context }: AddPaymentProps) {
   const [cvc, setCvc] = useState('123');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!context.riderId) {
+      navigation.replace('Registration');
+    }
+  }, [context.riderId, navigation]);
+
   const submitPaymentMethod = useCallback(async () => {
     if (!context.riderId) {
       Alert.alert('Missing Rider', 'Please complete rider registration first.');
@@ -697,7 +703,7 @@ function AddPaymentMethodScreen({ navigation, context }: AddPaymentProps) {
         throw new Error(payload.message || 'Failed to add payment method.');
       }
 
-      navigation.navigate('Home');
+      navigation.replace('Home');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unable to add payment method.';
       Alert.alert('Error', message);
@@ -735,6 +741,12 @@ function HomeScreen({ navigation, context }: HomeProps) {
   const mapRegionRef = useRef<Region>(DEFAULT_REGION);
   const lastNearbySubscriptionAtRef = useRef<number>(0);
   const lastPendingFeedbackPromptTripIdRef = useRef<string>('');
+
+  useEffect(() => {
+    if (!context.riderId) {
+      navigation.replace('Registration');
+    }
+  }, [context.riderId, navigation]);
 
   const loadPendingFeedbackPrompt = useCallback(
     async (showAlert: boolean) => {
@@ -988,8 +1000,13 @@ function HomeScreen({ navigation, context }: HomeProps) {
       return;
     }
 
-    Alert.alert('Coming soon', `${action} will be available in the next rider release.`);
-  }, [navigation]);
+    if (normalized.includes('receipt') || normalized.includes('rate')) {
+      loadPendingFeedbackPrompt(true);
+      return;
+    }
+
+    navigation.navigate('RequestRide');
+  }, [loadPendingFeedbackPrompt, navigation]);
 
   const quickActions = homeData?.quickActions || ['Book Ride', 'Favorites', 'Support'];
   const walletLabel = homeData?.defaultPaymentMethod
@@ -1173,6 +1190,12 @@ function RequestRideScreen({ navigation, context }: RequestRideProps) {
   const [favoriteSaving, setFavoriteSaving] = useState(false);
   const lastResolvedPickupAddressRef = useRef('');
   const lastResolvedDropoffAddressRef = useRef('');
+
+  useEffect(() => {
+    if (!context.riderId) {
+      navigation.replace('Registration');
+    }
+  }, [context.riderId, navigation]);
 
   const requestRideCategory = useMemo<RequestRideCategory>(() => {
     const selectedCategory = RIDE_CATEGORY_OPTIONS.find(option => option.value === rideCategory);
@@ -1645,7 +1668,7 @@ function RequestRideScreen({ navigation, context }: RequestRideProps) {
         setUpfrontPricing(payload.pricing);
       }
 
-      navigation.navigate('WaitingForDriver', {
+      navigation.replace('WaitingForDriver', {
         tripId: payload?.trip?._id,
       });
     } catch (tripError: unknown) {
@@ -1965,6 +1988,19 @@ function WaitingForDriverScreen({ navigation, route, context }: WaitingForDriver
   const [error, setError] = useState('');
   const [latestTripId, setLatestTripId] = useState(route.params?.tripId || '');
 
+  useEffect(() => {
+    if (!context.riderId) {
+      navigation.replace('Registration');
+    }
+  }, [context.riderId, navigation]);
+
+  const normalizeTripStatus = useCallback((value: string | null | undefined) => {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_');
+  }, []);
+
   const formatMoney = useCallback((value: number | null | undefined) => {
     if (!Number.isFinite(Number(value))) {
       return 'N/A';
@@ -2049,6 +2085,22 @@ function WaitingForDriverScreen({ navigation, route, context }: WaitingForDriver
   }, [driverToPickupDistanceKm, trip?.currentDriverLocation?.speedKph]);
 
   const driverVehicle = trip?.driver?.vehicle && typeof trip.driver.vehicle === 'object' ? trip.driver.vehicle : null;
+  const normalizedTripStatus = normalizeTripStatus(trip?.status);
+
+  useEffect(() => {
+    if (!trip?._id) {
+      return;
+    }
+
+    if (['completed', 'trip_completed', 'trip_ended'].includes(normalizedTripStatus)) {
+      navigation.replace('Receipt', { tripId: trip._id });
+      return;
+    }
+
+    if (['driver_assigned', 'driver_accepted', 'driver_arrived_pickup', 'in_progress', 'destination_reached'].includes(normalizedTripStatus)) {
+      navigation.replace('TripProgress', { tripId: trip._id });
+    }
+  }, [navigation, normalizedTripStatus, trip?._id]);
 
   return (
     <ScrollView contentContainerStyle={styles.screenContainer}>
@@ -2100,10 +2152,12 @@ function WaitingForDriverScreen({ navigation, route, context }: WaitingForDriver
 
       <View style={styles.buttonStack}>
         <Button title="Refresh Trip Status" onPress={loadActiveTrip} />
-        {trip?._id ? <Button title="Open Trip Progress" onPress={() => navigation.navigate('TripProgress', { tripId: trip._id })} /> : null}
-        {trip?._id && trip.status === 'completed' ? <Button title="Open Receipt" onPress={() => navigation.navigate('Receipt', { tripId: trip._id })} /> : null}
+        {trip?._id ? <Button title="Open Trip Progress" onPress={() => navigation.replace('TripProgress', { tripId: trip._id })} /> : null}
+        {trip?._id && ['completed', 'trip_completed', 'trip_ended'].includes(normalizedTripStatus) ? (
+          <Button title="Open Receipt" onPress={() => navigation.replace('Receipt', { tripId: trip._id })} />
+        ) : null}
         <Button title="Support" onPress={() => navigation.navigate('Support', { tripId: trip?._id })} />
-        <Button title="Request Another Ride" onPress={() => navigation.navigate('RequestRide')} />
+        <Button title="Request Another Ride" onPress={() => navigation.replace('RequestRide')} />
       </View>
     </ScrollView>
   );
@@ -2113,13 +2167,26 @@ type TripProgressProps = NativeStackScreenProps<RootStackParamList, 'TripProgres
   context: OnboardingContext;
 };
 
-function TripProgressScreen({ navigation, route }: TripProgressProps) {
+function TripProgressScreen({ navigation, route, context }: TripProgressProps) {
   const { tripId } = route.params;
 
   const [trip, setTrip] = useState<RiderTrip | null>(null);
   const [tracking, setTracking] = useState<TripTrackingResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!context.riderId) {
+      navigation.replace('Registration');
+    }
+  }, [context.riderId, navigation]);
+
+  const normalizeTripStatus = useCallback((value: string | null | undefined) => {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_');
+  }, []);
 
   const formatTime = useCallback((value?: string | null) => {
     if (!value) {
@@ -2182,8 +2249,17 @@ function TripProgressScreen({ navigation, route }: TripProgressProps) {
     'driver_accepted',
     'driver_arrived_pickup',
     'in_progress',
+    'destination_reached',
     'completed',
   ];
+
+  const normalizedProgressStatus = normalizeTripStatus(trip?.status || tracking?.status);
+
+  useEffect(() => {
+    if (['completed', 'trip_completed', 'trip_ended'].includes(normalizedProgressStatus)) {
+      navigation.replace('Receipt', { tripId });
+    }
+  }, [navigation, normalizedProgressStatus, tripId]);
 
   const driverToDropoffDistanceKm = useMemo(() => {
     if (!tracking?.currentDriverLocation || !tracking?.dropoff) {
@@ -2251,7 +2327,7 @@ function TripProgressScreen({ navigation, route }: TripProgressProps) {
         <Text style={styles.cardTitle}>Status Timeline</Text>
         {progressSteps.map(step => (
           <Text key={step} style={styles.cardSubText}>
-            {step === (trip?.status || tracking?.status) ? '●' : '○'} {step}
+            {step === normalizedProgressStatus ? '●' : '○'} {step}
           </Text>
         ))}
       </View>
@@ -2292,7 +2368,9 @@ function TripProgressScreen({ navigation, route }: TripProgressProps) {
 
       <View style={styles.buttonStack}>
         <Button title="Refresh Progress" onPress={loadProgress} />
-        {trip?.status === 'completed' ? <Button title="View Receipt" onPress={() => navigation.navigate('Receipt', { tripId })} /> : null}
+        {['completed', 'trip_completed', 'trip_ended'].includes(normalizedProgressStatus) ? (
+          <Button title="View Receipt" onPress={() => navigation.replace('Receipt', { tripId })} />
+        ) : null}
         <Button title="Support" onPress={() => navigation.navigate('Support', { tripId })} />
       </View>
     </ScrollView>
@@ -2352,6 +2430,12 @@ function ReceiptScreen({ route, navigation, context }: ReceiptProps) {
   const [tipFeedbackTone, setTipFeedbackTone] = useState<'success' | 'neutral'>('success');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!context.riderId) {
+      navigation.replace('Registration');
+    }
+  }, [context.riderId, navigation]);
 
   const formatMoney = useCallback((value: number | null | undefined) => {
     if (!Number.isFinite(Number(value))) {
@@ -2770,6 +2854,12 @@ function SupportScreen({ route, navigation, context }: SupportProps) {
   const [subject, setSubject] = useState('Need help with my ride');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!context.riderId) {
+      navigation.replace('Registration');
+    }
+  }, [context.riderId, navigation]);
 
   const submitSupportRequest = useCallback(async () => {
     if (!context.riderId) {
