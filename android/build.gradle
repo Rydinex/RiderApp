@@ -19,3 +19,16 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// NDK 27 no longer auto-links libc++_shared for all external CMake projects.
+// Ensure Android library subprojects that use CMake get this linker flag.
+subprojects { project ->
+    project.pluginManager.withPlugin("com.android.library") {
+        try {
+            project.android.defaultConfig.externalNativeBuild.cmake
+                .arguments("-DCMAKE_SHARED_LINKER_FLAGS=-lc++_shared")
+        } catch (Exception ignored) {
+            // Skip libraries that do not define CMake externalNativeBuild.
+        }
+    }
+}
