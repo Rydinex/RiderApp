@@ -24,6 +24,9 @@ import Geolocation from '@react-native-community/geolocation';
 import MapView, { Marker, Polyline, Region } from 'react-native-maps';
 import { io, Socket } from 'socket.io-client';
 import { API_BASE_URL, SOCKET_URL } from './src/config/network';
+import AccountSettingsScreen from './src/screens/AccountSettingsScreen';
+import MainTabNavigator from './src/navigation/MainTabNavigator';
+import RequestRideScreenNew from './src/screens/RequestRideScreen';
 
 type RootStackParamList = {
   Registration: undefined;
@@ -34,9 +37,10 @@ type RootStackParamList = {
   TripProgress: { tripId: string };
   Receipt: { tripId: string };
   Support: { tripId?: string } | undefined;
+  AccountSettings: undefined;
 };
 
-type RiderHomeData = {
+export type RiderHomeData = {
   greeting: string;
   status: string;
   totalPaymentMethods: number;
@@ -47,7 +51,7 @@ type RiderHomeData = {
   quickActions: string[];
 };
 
-type NearbyDriver = {
+export type NearbyDriver = {
   driverId: string;
   latitude: number;
   longitude: number;
@@ -55,13 +59,13 @@ type NearbyDriver = {
   updatedAt?: number;
 };
 
-type TripPoint = {
+export type TripPoint = {
   latitude: number;
   longitude: number;
   address?: string;
 };
 
-type RideCategory =
+export type RideCategory =
   | 'black_car'
   | 'black_suv'
   | 'rydinex_regular'
@@ -72,9 +76,9 @@ type RideCategory =
   | 'xl'
   | 'green';
 
-type RequestRideCategory = 'black_car' | 'black_suv';
+export type RequestRideCategory = 'black_car' | 'black_suv';
 
-type RiderTrip = {
+export type RiderTrip = {
   _id: string;
   status: string;
   rideCategory?: RideCategory;
@@ -115,7 +119,7 @@ type RiderTrip = {
   } | null;
 };
 
-type UpfrontPricingQuote = {
+export type UpfrontPricingQuote = {
   rideCategory?: RideCategory;
   serviceDogRequested?: boolean;
   serviceDogFee?: number;
@@ -153,7 +157,7 @@ type UpfrontPricingQuote = {
   currency?: string;
 };
 
-type FavoriteLocation = {
+export type FavoriteLocation = {
   _id: string;
   label: string;
   address: string;
@@ -162,7 +166,7 @@ type FavoriteLocation = {
   placeType: 'home' | 'work' | 'other';
 };
 
-type AirportPickupInstructions = {
+export type AirportPickupInstructions = {
   operationType?: 'airport' | 'event' | 'city';
   isAirportPickup: boolean;
   isEventPickup?: boolean;
@@ -202,7 +206,7 @@ type AirportPickupInstructions = {
   message?: string;
 };
 
-type TripTrackingResponse = {
+export type TripTrackingResponse = {
   tripId: string;
   status: string;
   pickup: TripPoint;
@@ -287,7 +291,7 @@ type TripReceipt = {
   }>;
 };
 
-type PendingTripFeedback = {
+export type PendingTripFeedback = {
   hasPendingFeedback: boolean;
   tripId: string;
   promptMessage?: string;
@@ -301,7 +305,7 @@ type PendingTripFeedback = {
   };
 };
 
-type OnboardingContext = {
+export type OnboardingContext = {
   riderId: string;
   setRiderId: (value: string) => void;
 };
@@ -310,14 +314,14 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const RIDER_SESSION_KEY = 'rydinex_rider_id';
 const RIDER_LOGO_SOURCE = require('./src/assets/Rydinex.png');
 
-const DEFAULT_REGION: Region = {
+export const DEFAULT_REGION: Region = {
   latitude: 6.5244,
   longitude: 3.3792,
   latitudeDelta: 0.08,
   longitudeDelta: 0.08,
 };
 
-const PREMIUM_COLORS = {
+export const PREMIUM_COLORS = {
   background: '#131314',
   card: '#1f1f20',
   cardHigh: '#2a2a2b',
@@ -347,7 +351,7 @@ const RIDE_CATEGORY_LABELS: Record<RideCategory, string> = {
   green: 'Green',
 };
 
-const RIDE_CATEGORY_OPTIONS: Array<{
+export const RIDE_CATEGORY_OPTIONS: Array<{
   value: RideCategory;
   label: string;
   requestCategory: RequestRideCategory;
@@ -384,7 +388,7 @@ const RIDE_CATEGORY_OPTIONS: Array<{
   },
 ];
 
-function formatRideCategoryLabel(category: RideCategory | string | null | undefined) {
+export function formatRideCategoryLabel(category: RideCategory | string | null | undefined) {
   const normalized = String(category || '')
     .trim()
     .toLowerCase();
@@ -396,7 +400,7 @@ function formatRideCategoryLabel(category: RideCategory | string | null | undefi
   return normalized ? normalized.replace(/_/g, ' ').toUpperCase() : 'Black Car';
 }
 
-function haversineDistanceKm(pointA: TripPoint, pointB: TripPoint) {
+export function haversineDistanceKm(pointA: TripPoint, pointB: TripPoint) {
   const earthRadiusKm = 6371;
   const latitudeDeltaRadians = (pointB.latitude - pointA.latitude) * (Math.PI / 180);
   const longitudeDeltaRadians = (pointB.longitude - pointA.longitude) * (Math.PI / 180);
@@ -414,7 +418,7 @@ function haversineDistanceKm(pointA: TripPoint, pointB: TripPoint) {
   return earthRadiusKm * c;
 }
 
-function estimateEtaMinutes(distanceKm: number, speedKph = 28) {
+export function estimateEtaMinutes(distanceKm: number, speedKph = 28) {
   if (!Number.isFinite(distanceKm) || distanceKm <= 0) {
     return null;
   }
@@ -423,7 +427,7 @@ function estimateEtaMinutes(distanceKm: number, speedKph = 28) {
   return Math.max(1, Math.round((distanceKm / safeSpeed) * 60));
 }
 
-function formatEtaLabel(minutes: number | null) {
+export function formatEtaLabel(minutes: number | null) {
   if (!Number.isFinite(Number(minutes)) || Number(minutes) <= 0) {
     return 'ETA calculating';
   }
@@ -563,11 +567,11 @@ function App() {
           <Stack.Screen name="AddPaymentMethod" options={{ title: 'Add Payment Method' }}>
             {props => <AddPaymentMethodScreen {...props} context={contextValue} />}
           </Stack.Screen>
-          <Stack.Screen name="Home" options={{ title: 'Rider Home' }}>
-            {props => <HomeScreen {...props} context={contextValue} />}
+          <Stack.Screen name="Home" options={{ headerShown: false }}>
+            {props => <MainTabNavigator {...props} context={contextValue} />}
           </Stack.Screen>
-          <Stack.Screen name="RequestRide" options={{ title: 'Request Ride' }}>
-            {props => <RequestRideScreen {...props} context={contextValue} />}
+          <Stack.Screen name="RequestRide" options={{ headerShown: false }}>
+            {props => <RequestRideScreenNew {...props} context={contextValue} />}
           </Stack.Screen>
           <Stack.Screen name="WaitingForDriver" options={{ title: 'Waiting for Driver' }}>
             {props => <WaitingForDriverScreen {...props} context={contextValue} />}
@@ -580,6 +584,9 @@ function App() {
           </Stack.Screen>
           <Stack.Screen name="Support" options={{ title: 'Support' }}>
             {props => <SupportScreen {...props} context={contextValue} />}
+          </Stack.Screen>
+          <Stack.Screen name="AccountSettings" options={{ title: 'Account Settings' }}>
+            {props => <AccountSettingsScreen {...props} context={contextValue} />}
           </Stack.Screen>
         </Stack.Navigator>
       </NavigationContainer>
@@ -1005,10 +1012,15 @@ function HomeScreen({ navigation, context }: HomeProps) {
       return;
     }
 
+    if (normalized.includes('account') || normalized.includes('profile')) {
+      navigation.navigate('AccountSettings');
+      return;
+    }
+
     navigation.navigate('RequestRide');
   }, [loadPendingFeedbackPrompt, navigation]);
 
-  const quickActions = homeData?.quickActions || ['Book Ride', 'Favorites', 'Support'];
+  const quickActions = homeData?.quickActions || ['Book Ride', 'Account', 'Support'];
   const walletLabel = homeData?.defaultPaymentMethod
     ? `${homeData.defaultPaymentMethod.brand || 'Card'} ••••${homeData.defaultPaymentMethod.last4 || ''}`
     : 'Add a default payment method';
