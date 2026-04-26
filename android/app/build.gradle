@@ -89,11 +89,11 @@ android {
 
     namespace "com.rydinex.rider"
     defaultConfig {
-        applicationId "com.rydinex.rider"
+        applicationId "com.rydinex.riderapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 14
-        versionName "1.1.12"
+        versionCode 1
+        versionName "1.0"
         externalNativeBuild {
             cmake {
                 arguments "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF", "-DANDROID_STL=c++_shared", "-DANDROID_TOOLCHAIN=clang", "-DCMAKE_SHARED_LINKER_FLAGS=-lc++_shared"
