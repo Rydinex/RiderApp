@@ -1,8 +1,8 @@
 // Rider App – API Configuration
 
-// Backend API domain (production)
+// Backend API domain (development)
 const BACKEND_URL =
-	process.env.EXPO_PUBLIC_BACKEND_URL || 'https://api.rydinex.com';
+	process.env.EXPO_PUBLIC_BACKEND_URL || 'http://10.0.0.70:8080';
 
 // Optional: Admin panel domain (for future use)
 export const ADMIN_PANEL_URL = 'https://admin.rydinex.com';

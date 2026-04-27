@@ -20,10 +20,25 @@ import {
   UpfrontPricingQuote,
   TripPoint,
   DEFAULT_REGION,
-  PREMIUM_COLORS,
   RIDE_CATEGORY_OPTIONS,
   formatRideCategoryLabel,
 } from '../../App'; // Adjust path if needed
+
+const PREMIUM_COLORS = {
+  background: '#131314',
+  card: '#1f1f20',
+  cardHigh: '#2a2a2b',
+  cardHighest: '#353436',
+  textPrimary: '#e5e2e3',
+  textSecondary: '#c2c6d7',
+  divider: '#424654',
+  accent: '#276ef1',
+  accentSoft: '#31477c',
+  successSoft: '#163828',
+  warningSoft: '#3d2f1b',
+  danger: '#ffb4ab',
+  shadow: '#000000',
+};
 
 const mapStyle = [
   { "elementType": "geometry", "stylers": [{ "color": "#1b1b1c" }] },
