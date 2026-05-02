@@ -2,7 +2,7 @@
 
 // Backend API domain (development)
 const BACKEND_URL =
-	process.env.EXPO_PUBLIC_BACKEND_URL || 'http://10.0.0.70:8080';
+	process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
 // Optional: Admin panel domain (for future use)
 export const ADMIN_PANEL_URL = 'https://admin.rydinex.com';

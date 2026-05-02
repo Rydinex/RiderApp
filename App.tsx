@@ -27,6 +27,17 @@ import { API_BASE_URL, SOCKET_URL } from './src/config/network';
 import AccountSettingsScreen from './src/screens/AccountSettingsScreen';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
 import RequestRideScreenNew from './src/screens/RequestRideScreen';
+import TripTrackingScreen from './src/screens/TripTrackingScreen';
+import DriverProfileScreen from './src/screens/DriverProfileScreen';
+import SafetyHubScreen from './src/screens/SafetyHubScreen';
+import ReservationsScreen from './src/screens/ReservationsScreen';
+import RatingScreen from './src/screens/RatingScreen';
+import PinPrecisionScreen from './src/screens/PinPrecisionScreen';
+import FlightTrackingScreen from './src/screens/FlightTrackingScreen';
+import MultiStopScreen from './src/screens/MultiStopScreen';
+import RideSelectionScreen from './src/screens/RideSelectionScreen';
+import ArriveWithComfortScreen from './src/screens/ArriveWithComfortScreen';
+import ReservationsFlowScreen from './src/screens/ReservationsFlowScreen';
 
 type RootStackParamList = {
   Registration: undefined;
@@ -38,6 +49,17 @@ type RootStackParamList = {
   Receipt: { tripId: string };
   Support: { tripId?: string } | undefined;
   AccountSettings: undefined;
+  TripTracking: { tripId: string };
+  DriverProfile: { driverName?: string; driverRating?: number; vehicle?: string; plateNumber?: string; driverId?: string };
+  SafetyHub: { tripId?: string } | undefined;
+  Reservations: undefined;
+  Rating: { tripId: string; driverName?: string; driverRating?: number };
+  PinPrecision: { latitude?: number; longitude?: number; address?: string } | undefined;
+  FlightTracking: { flightNumber?: string; tripId?: string } | undefined;
+  MultiStop: undefined;
+  RideSelection: { pickup?: any; dropoff?: any } | undefined;
+  ArriveWithComfort: undefined;
+  ReservationsFlow: { reservationId?: string } | undefined;
 };
 
 export type RiderHomeData = {
@@ -315,8 +337,8 @@ const RIDER_SESSION_KEY = 'rydinex_rider_id';
 const RIDER_LOGO_SOURCE = require('./src/assets/Rydinex.png');
 
 export const DEFAULT_REGION: Region = {
-  latitude: 6.5244,
-  longitude: 3.3792,
+  latitude: 41.8781,
+  longitude: -87.6298,
   latitudeDelta: 0.08,
   longitudeDelta: 0.08,
 };
@@ -367,6 +389,11 @@ export const RIDE_CATEGORY_OPTIONS: Array<{
     requestCategory: 'black_car',
   },
   {
+    value: 'black_suv',
+    label: 'Black SUV',
+    requestCategory: 'black_suv',
+  },
+  {
     value: 'black_car',
     label: 'Black Car',
     requestCategory: 'black_car',
@@ -374,11 +401,6 @@ export const RIDE_CATEGORY_OPTIONS: Array<{
   {
     value: 'rydinex_xl',
     label: 'Rydinex XL',
-    requestCategory: 'black_suv',
-  },
-  {
-    value: 'black_suv',
-    label: 'Black SUV',
     requestCategory: 'black_suv',
   },
   {
@@ -416,6 +438,24 @@ export function haversineDistanceKm(pointA: TripPoint, pointB: TripPoint) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return earthRadiusKm * c;
+}
+
+export function haversineDistanceMiles(pointA: TripPoint, pointB: TripPoint) {
+  const earthRadiusMiles = 3958.8;
+  const latitudeDeltaRadians = (pointB.latitude - pointA.latitude) * (Math.PI / 180);
+  const longitudeDeltaRadians = (pointB.longitude - pointA.longitude) * (Math.PI / 180);
+
+  const originLatitudeRadians = pointA.latitude * (Math.PI / 180);
+  const destinationLatitudeRadians = pointB.latitude * (Math.PI / 180);
+
+  const a =
+    Math.sin(latitudeDeltaRadians / 2) * Math.sin(latitudeDeltaRadians / 2) +
+    Math.sin(longitudeDeltaRadians / 2) * Math.sin(longitudeDeltaRadians / 2) *
+      Math.cos(originLatitudeRadians) *
+      Math.cos(destinationLatitudeRadians);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadiusMiles * c;
 }
 
 export function estimateEtaMinutes(distanceKm: number, speedKph = 28) {
@@ -588,6 +628,17 @@ function App() {
           <Stack.Screen name="AccountSettings" options={{ title: 'Account Settings' }}>
             {props => <AccountSettingsScreen {...props} context={contextValue} />}
           </Stack.Screen>
+          <Stack.Screen name="TripTracking" options={{ headerShown: false }} component={TripTrackingScreen} />
+          <Stack.Screen name="DriverProfile" options={{ headerShown: false }} component={DriverProfileScreen} />
+          <Stack.Screen name="SafetyHub" options={{ headerShown: false }} component={SafetyHubScreen} />
+          <Stack.Screen name="Reservations" options={{ headerShown: false }} component={ReservationsScreen} />
+          <Stack.Screen name="Rating" options={{ headerShown: false }} component={RatingScreen} />
+          <Stack.Screen name="PinPrecision" options={{ headerShown: false }} component={PinPrecisionScreen} />
+          <Stack.Screen name="FlightTracking" options={{ headerShown: false }} component={FlightTrackingScreen} />
+          <Stack.Screen name="MultiStop" options={{ headerShown: false }} component={MultiStopScreen} />
+          <Stack.Screen name="RideSelection" options={{ headerShown: false }} component={RideSelectionScreen} />
+          <Stack.Screen name="ArriveWithComfort" options={{ headerShown: false }} component={ArriveWithComfortScreen} />
+          <Stack.Screen name="ReservationsFlow" options={{ headerShown: false }} component={ReservationsFlowScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaView>

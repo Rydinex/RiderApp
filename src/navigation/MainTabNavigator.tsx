@@ -63,6 +63,7 @@ export default function MainTabNavigator({ route, navigation, context }: any) {
       >
         {(props) => <AccountSettingsScreen {...props} context={context} />}
       </Tab.Screen>
+
     </Tab.Navigator>
   );
 }
