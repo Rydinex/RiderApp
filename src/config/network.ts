@@ -1,8 +1,14 @@
 // Rider App – API Configuration
 
-// Backend API domain (development)
+const LOCAL_BACKEND_HOST = '10.0.0.206';
+const LOCAL_BACKEND_PORT = 8080;
+
+// Backend API domain
 const BACKEND_URL =
-	process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+	process.env.EXPO_PUBLIC_BACKEND_URL ||
+	(__DEV__
+		? `http://${LOCAL_BACKEND_HOST}:${LOCAL_BACKEND_PORT}`
+		: 'https://api.rydinex.com');
 
 // Optional: Admin panel domain (for future use)
 export const ADMIN_PANEL_URL = 'https://admin.rydinex.com';
